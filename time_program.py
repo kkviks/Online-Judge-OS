@@ -106,9 +106,9 @@ def run_helper(parentPath, filepath):
     print("Running test cases on " + filepath)
 
     #executablePath = parentPath + './a.out'
-    executablePath = './a.exe'
+    executablePath = './a.out'
     #p = Popen([executablePath],stdin=PIPE,stdout=PIPE, stderr = PIPE, shell=True)
-    p = pexpect.spawn(filepath, encoding='utf-8')
+    p = pexpect.spawn(executablePath, encoding='utf-8')
 
     status = runTestCases(p, filepath)
 
