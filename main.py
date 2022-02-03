@@ -1,13 +1,13 @@
 import os
 import time_program
 import pandas as pd
-
+import sys
 codes_dir = 'codes'
 
 df = pd.read_excel('leaderboard.xlsx', index_col=0) 
 print(df)
 
-#Reading directories
+# Reading directories
 groups = [d for d in os.listdir(codes_dir)]
 
 for group in groups:
@@ -19,5 +19,7 @@ for group in groups:
         
         if status is time_program.FILE_PASSED:
             print(filepath + ' passed successfuly with runtime: ' + str(t) +' ms\n')
+            #update and save the leaderboard excel file here
+            print("Leaderboard updated!")
         else:
             print(filepath + ' failed to pass all the test cases')

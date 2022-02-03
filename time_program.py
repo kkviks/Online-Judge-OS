@@ -3,6 +3,7 @@ from subprocess import Popen, PIPE, call
 import timeit
 import os
 import errno
+import pexpect, sys
 
 flags = "gcc"
 tests_dir = 'test_cases'
@@ -50,15 +51,37 @@ def runTestCase(p, inputPath, outputPath):
     output = readFileToString(outputPath)
 
     #Sending STDIN to file and getting STDOUT
-    stdInput = bytes(input, 'utf-8')
-    #stdOutInbytes, err = p.communicate(stdInput)[0] --- can only read once
-    stdOutInbytes = p.stdin.write(stdInput)
-    #stdOutput = stdOutInbytes.decode('utf-8')
-    #print(stdOutInbytes)
+
+    # stdInput = bytes(input, 'utf-8')
+    # stdOutInbytes = p.communicate(stdInput)[0] #--- can only read once
+    # stdOutput = stdOutInbytes.decode('utf-8')
+    # print(stdOutput)
+    # p.stdin.write(stdInput)
+
+    # stdOutput = p.stdout.read()
+    # for line in stdOutput:
+    #     print("out: ", line.rstrip() )
+
+    # print('Output :')
+    # print(sys.stdout)
+
+    # p.stdin.close()
+    # p.wait()
+
+    p.sendline(input)
+    isMatch = False
+
+    try:
+        index = p.expect_exact([output,pexpect.EOF,pexpect.TIMEOUT])
+        if index == 0:
+            isMatch = True
+    except pexpect.EOF or pexpect.TIMEOUT:
+        print('Error from sending/reading input/output from our side .... ')
+        isMatch = False
 
     #Comparing STDOUT with correct answer
-
-    return True
+    print(p.before)
+    return isMatch
 
 def runTestCases(p, filepath):
 
@@ -83,12 +106,13 @@ def run_helper(parentPath, filepath):
     print("Running test cases on " + filepath)
 
     #executablePath = parentPath + './a.out'
-    executablePath = './a.out'
-    p = Popen([executablePath],stdin=PIPE,stdout=PIPE, stderr = PIPE)
+    executablePath = './a.exe'
+    #p = Popen([executablePath],stdin=PIPE,stdout=PIPE, stderr = PIPE, shell=True)
+    p = pexpect.spawn(filepath, encoding='utf-8')
 
     status = runTestCases(p, filepath)
 
-    p.stdin.close()
+    # p.stdin.close()
     p.wait()
 
     return status
@@ -96,7 +120,7 @@ def run_helper(parentPath, filepath):
 def run(parentPath, filepath):
     #Compile the C file using flags
     print('\nCompiling: '+filepath)
-    call([flags, filepath])
+    call([flags, filepath], shell=True)
 
     tic = timeit.default_timer()
     status = run_helper(parentPath, filepath)
