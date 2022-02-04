@@ -5,7 +5,7 @@ import os
 import errno
 import pexpect, sys
 
-flags = "gcc"
+flags = "g++"
 tests_dir = 'test_cases'
 
 FILE_PASSED = 'tcs_passed'
@@ -18,78 +18,65 @@ def readFileToString(filepath):
         return data
 
 
-def work():
-    #result = subprocess.call("./a.out") 
-    p = Popen(["./a.out"],stdin=PIPE, stdout=PIPE, stderr=PIPE)
-
-    #### Reading and running input test case
-    test_case = readFileToString('test_case.txt')
-    test_case_bytes = bytes(test_case, 'utf-8')
-    student_output, err = p.communicate(test_case_bytes)
-    student_output_str = student_output.decode("utf-8") 
-
-    #### Checking correctness
-    #print(student_output_str)
-    test_case_ans = readFileToString('desired_output.txt')
-    print(bytes(student_output_str, 'utf-8'))
-    print("---output---\n")
-    print(bytes(test_case_ans, 'utf-8'))
-
-    print("Sudukos: \n")
-    print(student_output_str)
-    print("----")
-    print(test_case_ans)
-
-    if(test_case_ans is student_output_str):
-        print("Matched!")
-    else:
-        print("Wrong answer!")
-    return
-
-def runTestCase(p, inputPath, outputPath):
+def runTestCase(filepath, inputPath, outputPath):
     input = readFileToString(inputPath)
     output = readFileToString(outputPath)
 
+    print("Test case input: ", input)
+    print("Test case desired output: ", output)
+    
+
     #Sending STDIN to file and getting STDOUT
+    executablePath = './a.out'
+    p = Popen(executablePath,stdin=PIPE, stdout = PIPE)
+    inp, out = p.stdin, p.stdout
 
-    # stdInput = bytes(input, 'utf-8')
-    # stdOutInbytes = p.communicate(stdInput)[0] #--- can only read once
-    # stdOutput = stdOutInbytes.decode('utf-8')
-    # print(stdOutput)
-    # p.stdin.write(stdInput)
+    inp.write( bytes(input, encoding='utf-8'))
+    student_output = out.read().decode()
 
-    # stdOutput = p.stdout.read()
-    # for line in stdOutput:
-    #     print("out: ", line.rstrip() )
+    inp.close()
+    out.close()
 
-    # print('Output :')
-    # print(sys.stdout)
+    print("Student Out: ", student_output)
+    return True
 
-    # p.stdin.close()
-    # p.wait()
 
-    p.sendline(input)
-    isMatch = False
+    # p = pexpect.spawn(executablePath, encoding='utf-8')
+    # p.send(input)
 
-    try:
-        index = p.expect_exact([output,pexpect.EOF,pexpect.TIMEOUT])
-        if index == 0:
-            isMatch = True
-    except pexpect.EOF or pexpect.TIMEOUT:
-        print('Error from sending/reading input/output from our side .... ')
-        isMatch = False
+    # child = pexpect.spawn(executablePath)
+    # child.send(input)
+    # child.logfile_read = sys.stdout.buffer
+    # index = child.expect_exact([output, pexpect.EOF, pexpect.TIMEOUT])
+    # child.close()
 
-    #Comparing STDOUT with correct answer
-    print(p.before)
-    return isMatch
+    # if index==0:
+    #     print('Matched!')
+    # elif pexpect.EOF or pexpect.TIMEOUT:
+    #     print('Pexpect exception')
 
-def runTestCases(p, filepath):
+    # isMatch = False
+
+    # try:
+    #     index = p.expect_exact([output,pexpect.EOF,pexpect.TIMEOUT], timeout=10000)
+    #     if index == 0:
+    #         #isMatch = True
+    #         return True
+    # except pexpect.EOF or pexpect.TIMEOUT:
+    #     print('Error from sending/reading input/output from our side .... ')
+    #     isMatch = False
+
+    # #Comparing STDOUT with correct answer
+    # print("p.after: ",p.after)
+    return True
+
+def runTestCases(filepath):
 
     for test_case in os.listdir(tests_dir):
         inputPath = tests_dir + '/' + test_case+'/input.txt'
         outputPath = tests_dir + '/' + test_case+'/output.txt'
 
-        isTestPassed = runTestCase(p,inputPath,outputPath)
+        isTestPassed = runTestCase(filepath, inputPath,outputPath)
 
         if isTestPassed:
             print(filepath+' passed test ' + test_case + ' succesfully ✓')
@@ -105,22 +92,17 @@ def run_helper(parentPath, filepath):
 
     print("Running test cases on " + filepath)
 
-    #executablePath = parentPath + './a.out'
-    executablePath = './a.out'
-    #p = Popen([executablePath],stdin=PIPE,stdout=PIPE, stderr = PIPE, shell=True)
-    p = pexpect.spawn(executablePath, encoding='utf-8')
-
-    status = runTestCases(p, filepath)
+    status = runTestCases(filepath)
 
     # p.stdin.close()
-    p.wait()
+    #p.wait()
 
     return status
 
 def run(parentPath, filepath):
     #Compile the C file using flags
     print('\nCompiling: '+filepath)
-    call([flags, filepath], shell=True)
+    call([flags, filepath])
 
     tic = timeit.default_timer()
     status = run_helper(parentPath, filepath)
