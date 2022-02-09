@@ -2,8 +2,7 @@ from http.server import executable
 from subprocess import Popen, PIPE, call
 import timeit
 import os
-import errno
-import pexpect, sys
+import platform
 
 flags = "g++"
 tests_dir = 'test_cases'
@@ -14,101 +13,89 @@ FILE_FAILED = 'tc_failed'
 
 def readFileToString(filepath):
     with open(filepath, 'r') as file:
-        data = file.read()#.replace('\n', '')
+        data = file.read()  # .replace('\n', '')
         return data
 
 
-def runTestCase(filepath, inputPath, outputPath):
-    input = readFileToString(inputPath)
-    output = readFileToString(outputPath)
+def isCorrect(c_output, answer):
+    n = len(c_output)
 
-    print("Test case input: ", input)
-    print("Test case desired output: ", output)
-    
+    if len(answer) != n:
+        return False
 
-    #Sending STDIN to file and getting STDOUT
-    executablePath = './a.out'
-    p = Popen(executablePath,stdin=PIPE, stdout = PIPE)
-    inp, out = p.stdin, p.stdout
+    for i in range(n):
+        if c_output[i] != answer[i]:
+            return False
 
-    inp.write( bytes(input, encoding='utf-8'))
-    student_output = out.read().decode()
-
-    inp.close()
-    out.close()
-
-    print("Student Out: ", student_output)
     return True
 
 
-    # p = pexpect.spawn(executablePath, encoding='utf-8')
-    # p.send(input)
+def runTestCase(filepath, input_path, outputPath):
 
-    # child = pexpect.spawn(executablePath)
-    # child.send(input)
-    # child.logfile_read = sys.stdout.buffer
-    # index = child.expect_exact([output, pexpect.EOF, pexpect.TIMEOUT])
-    # child.close()
+    c_input = readFileToString(input_path)
+    answer = readFileToString(outputPath)
+    answer = answer.split()
 
-    # if index==0:
-    #     print('Matched!')
-    # elif pexpect.EOF or pexpect.TIMEOUT:
-    #     print('Pexpect exception')
+    #print("Test case input: ", c_input)
+    #print("Test case desired output: ", answer)
 
-    # isMatch = False
+    # Sending STDIN to file and getting STDOUT
+    platf = platform.system()
+    if platf == "Windows":
+        cmd = "a.exe"
+    elif platf == "Linux" or platf == "Darwin":
+        cmd = "./a.out"
+    else:
+        print("Unidentified System")
+        return False
 
-    # try:
-    #     index = p.expect_exact([output,pexpect.EOF,pexpect.TIMEOUT], timeout=10000)
-    #     if index == 0:
-    #         #isMatch = True
-    #         return True
-    # except pexpect.EOF or pexpect.TIMEOUT:
-    #     print('Error from sending/reading input/output from our side .... ')
-    #     isMatch = False
+    tic = timeit.default_timer()
+    p = Popen([cmd], stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True).communicate(c_input.encode('utf-8'))
+    toc = timeit.default_timer()
 
-    # #Comparing STDOUT with correct answer
-    # print("p.after: ",p.after)
-    return True
+    global t
+    t = toc - tic
+
+    c_output = p[0].decode('utf-8')
+    c_output = c_output.split()
+
+    res = isCorrect(c_output, answer)
+
+    #print("Student Out: ", c_output)
+    #print("\nAnswer : ", answer)
+    #print("\nMatch = ", res)
+    return res
+
 
 def runTestCases(filepath):
-
     for test_case in os.listdir(tests_dir):
-        inputPath = tests_dir + '/' + test_case+'/input.txt'
-        outputPath = tests_dir + '/' + test_case+'/output.txt'
+        input_path = tests_dir + '/' + test_case + '/input.txt'
+        output_path = tests_dir + '/' + test_case + '/output.txt'
 
-        isTestPassed = runTestCase(filepath, inputPath,outputPath)
+        is_test_passed = runTestCase(filepath, input_path, output_path)
 
-        if isTestPassed:
-            print(filepath+' passed test ' + test_case + ' succesfully ✓')
+        group = filepath.split('/')[1]
+
+        if is_test_passed:
+            print(group + ' passed test ' + test_case + ' succesfully ✓')
         else:
-            print(filepath+' failed test ' + test_case + ' succesfully ✗')
+            print(group + ' failed test ' + test_case + ' succesfully ✗')
             return FILE_FAILED
 
-    print('\n'+filepath + ' passed ALL test cases successfully ✓')
+    print(group + ' passed ALL test cases successfully ✓')
 
     return FILE_PASSED
 
+
 def run_helper(parentPath, filepath):
-
-    print("Running test cases on " + filepath)
-
     status = runTestCases(filepath)
-
-    # p.stdin.close()
-    #p.wait()
-
     return status
 
+
 def run(parentPath, filepath):
-    #Compile the C file using flags
-    print('\nCompiling: '+filepath)
-    call([flags, filepath])
+    # Compile the C file using flags
+    print('\nCompiling: ' + filepath)
+    call([flags, filepath])  # Need to check for compilation error
 
-    tic = timeit.default_timer()
     status = run_helper(parentPath, filepath)
-    toc = timeit.default_timer()
-
-    t = toc-tic
     return status, t
-
- 
