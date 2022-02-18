@@ -10,8 +10,9 @@ tests_dir = 'test_cases'
 
 FILE_PASSED = 'tcs_passed'
 FILE_FAILED = 'tc_failed'
+FILE_COMPILATION_FAILED = 'compilation_failed'
 
-suduko_size = 36
+suduko_size = 9
 
 
 def readFileToString(filepath):
@@ -52,7 +53,21 @@ def runTestCase(filepath, input_path, outputPath):
         return False
 
     args = [str(suduko_size), input_path]
-    
+
+
+
+
+#TIME
+
+
+
+
+
+
+
+
+
+
     tic = timeit.default_timer()
     p = Popen([cmd]+args, stdout=PIPE,shell=True).communicate() #.communicate(c_input.encode('utf-8'))
     toc = timeit.default_timer()
@@ -63,14 +78,17 @@ def runTestCase(filepath, input_path, outputPath):
     c_output = p[0].decode('utf-8')
     c_output = c_output.split()
 
-    print("C_in: ", )
-    print("C_out:\n", c_output)
+    # print("C_in: ", )
+    # print("C_out:\n", c_output)
 
     res = isCorrect(c_output, answer)
 
-    #print("Student Out: ", c_output)
-    #print("\nAnswer : ", answer)
-    #print("\nMatch = ", res)
+    print("Student Out: ", c_output)
+    
+    
+    
+    print("\nAnswer : ", outputPath, answer)
+    print("\nMatch = ", res)
     return res
 
 
@@ -103,8 +121,15 @@ def run(parentPath, filepath):
     #Delete a.out/a.exe from here 
     # Compile the C file using flags
     print('\nCompiling: ' + filepath)
-    call([flags, filepath])  # Need to check for compilation error
-    print('\nCompilation successful: ' + filepath)
+    compile_status = call([flags, filepath])  # Need to check for compilation error
+
+    if compile_status == 0 : 
+        print('\nCompilation successful: ' + filepath)
+    else: 
+        # t=999999999
+        return FILE_COMPILATION_FAILED, 9999999
+
+    
 
     status = run_helper(parentPath, filepath)
     return status, t

@@ -26,13 +26,33 @@ for group in groups:
             print('Group type:', type(group))
             if group in df['GName'].values:
                 df.loc[df["GName"] == group, "Time"] = t
+                df.loc[df["GName"] == group, "Remarks"] = ['pass']
             else:
-                new_row = {'GName': [str(group)], 'Time': [float(t)]}
+                new_row = {'GName': [str(group)], 'Time': [float(t)], 'Remarks': ['pass']}
                 df_new = pd.DataFrame(new_row)
                 df = pd.concat([df, df_new], ignore_index=True, axis=0)
                 # print(df)
-            df.sort_values('Time', inplace=True)
-            df.to_csv('leaderboard.csv')
 
-        else:
-            print(filepath + ' failed to pass all the test cases')
+        elif status is time_program.FILE_COMPILATION_FAILED: 
+            print(filepath + ' failed to compile')
+            if group in df['GName'].values:
+                df.loc[df["GName"] == group, "Time"] = t
+                df.loc[df["GName"] == group, "Remarks"] = "Compile Er"
+            else:
+                new_row = {'GName': [str(group)], 'Time': [float(t)], 'Remarks': ['Compile Er']}
+                df_new = pd.DataFrame(new_row)
+                df = pd.concat([df, df_new], ignore_index=True, axis=0)
+
+
+        elif status is time_program.FILE_FAILED:
+            print(filepath + 'Test case didnt match')
+            if group in df['GName'].values:
+                df.loc[df["GName"] == group, "Time"] = 999999
+                df.loc[df["GName"] == group, "Remarks"] = "Wrong Ans"
+            else:
+                new_row = {'GName': [str(group)], 'Time': [float(t)], 'Remarks': ['Wrong Ans']}
+                df_new = pd.DataFrame(new_row)
+                df = pd.concat([df, df_new], ignore_index=True, axis=0)
+        
+        df.sort_values('Time', inplace=True)
+        df.to_csv('leaderboard.csv')
