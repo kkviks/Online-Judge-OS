@@ -4,11 +4,14 @@ import timeit
 import os
 import platform
 
+
 flags = "g++"
 tests_dir = 'test_cases'
 
 FILE_PASSED = 'tcs_passed'
 FILE_FAILED = 'tc_failed'
+
+suduko_size = 36
 
 
 def readFileToString(filepath):
@@ -32,7 +35,6 @@ def isCorrect(c_output, answer):
 
 def runTestCase(filepath, input_path, outputPath):
 
-    c_input = readFileToString(input_path)
     answer = readFileToString(outputPath)
     answer = answer.split()
 
@@ -49,15 +51,20 @@ def runTestCase(filepath, input_path, outputPath):
         print("Unidentified System")
         return False
 
+    args = [str(suduko_size), input_path]
+    
     tic = timeit.default_timer()
-    p = Popen([cmd], stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True).communicate(c_input.encode('utf-8'))
+    p = Popen([cmd]+args, stdout=PIPE,shell=True).communicate() #.communicate(c_input.encode('utf-8'))
     toc = timeit.default_timer()
 
     global t
-    t = toc - tic
+    t = toc - tic   
 
     c_output = p[0].decode('utf-8')
     c_output = c_output.split()
+
+    print("C_in: ", )
+    print("C_out:\n", c_output)
 
     res = isCorrect(c_output, answer)
 
@@ -93,9 +100,11 @@ def run_helper(parentPath, filepath):
 
 
 def run(parentPath, filepath):
+    #Delete a.out/a.exe from here 
     # Compile the C file using flags
     print('\nCompiling: ' + filepath)
     call([flags, filepath])  # Need to check for compilation error
+    print('\nCompilation successful: ' + filepath)
 
     status = run_helper(parentPath, filepath)
     return status, t

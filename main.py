@@ -4,6 +4,7 @@ import pandas as pd
 
 codes_dir = 'codes'
 
+
 df = pd.read_csv('leaderboard.csv', index_col=0)
 print(df.columns)
 

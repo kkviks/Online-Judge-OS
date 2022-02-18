@@ -2,19 +2,15 @@
 #include <stdlib.h>
 
 // N is the size of the 2D matrix N*N
-#define N 9
+#define N 36
 
 /* A utility function to print grid */
 void print(int arr[N][N])
 {
-	for (int i = 0; i < N; i++)
-	{
-		for (int j = 0; j < N; j++){
-			if(i!=N-1 || j!=N-1)printf("%d ",arr[i][j]);
-			else printf("%d",arr[i][j]);
-		}
-		if(i!=N-1)
-			printf("\n");
+    for (int i=0; i<N; i++) {
+		for (int j=0; j<N; j++)
+			printf("%d\t", arr[i][j]);
+		printf("\n");
 	}
 }
 
@@ -24,26 +20,28 @@ void print(int arr[N][N])
 int isSafe(int grid[N][N], int row,
 					int col, int num)
 {
-
+	
 	// Check if we find the same num
 	// in the similar row , we return 0
-	for (int x = 0; x <= 8; x++)
+	for (int x = 0; x <= 35; x++)
 		if (grid[row][x] == num)
 			return 0;
 
 	// Check if we find the same num in the
 	// similar column , we return 0
-	for (int x = 0; x <= 8; x++)
+	for (int x = 0; x <= 35; x++)
 		if (grid[x][col] == num)
 			return 0;
 
 	// Check if we find the same num in the
 	// particular 3*3 matrix, we return 0
-	int startRow = row - row % 3,
-				startCol = col - col % 3;
+	int startRow = row - row % 6,
+				startCol = col - col % 6;
 
-	for (int i = 0; i < 3; i++)
-		for (int j = 0; j < 3; j++)
+    int z = sqrt(N);
+
+	for (int i = 0; i < z; i++)
+		for (int j = 0; j < z; j++)
 			if (grid[i + startRow][j +
 						startCol] == num)
 				return 0;
@@ -58,7 +56,7 @@ Sudoku solution (non-duplication across rows,
 columns, and boxes) */
 int solveSudoku(int grid[N][N], int row, int col)
 {
-
+	
 	// Check if we have reached the 8th row
 	// and 9th column (0
 	// indexed matrix) , we are
@@ -84,7 +82,7 @@ int solveSudoku(int grid[N][N], int row, int col)
 
 	for (int num = 1; num <= N; num++)
 	{
-
+		
 		// Check if it is safe to place
 		// the num (1-9) in the
 		// given row ,col ->we move to next column
@@ -97,13 +95,13 @@ int solveSudoku(int grid[N][N], int row, int col)
 			in the position
 			is correct	 */
 			grid[row][col] = num;
-
+		
 			// Checking for next possibility with next
 			// column
 			if (solveSudoku(grid, row, col + 1)==1)
 				return 1;
 		}
-
+	
 		// Removing the assigned num ,
 		// since our assumption
 		// was wrong , and we go for next
@@ -114,32 +112,47 @@ int solveSudoku(int grid[N][N], int row, int col)
 	return 0;
 }
 
-int main()
-{
-	// 0 means unassigned cells
-	// int grid[9][9] = { { 3, 0, 6, 5, 0, 8, 4, 0, 0 },
-	// 				{ 5, 2, 0, 0, 0, 0, 0, 0, 0 },
-	// 				{ 0, 8, 7, 0, 0, 0, 0, 3, 1 },
-	// 				{ 0, 0, 3, 0, 1, 0, 0, 8, 0 },
-	// 				{ 9, 0, 0, 8, 6, 3, 0, 0, 5 },
-	// 				{ 0, 5, 0, 0, 9, 0, 6, 0, 0 },
-	// 				{ 1, 3, 0, 0, 0, 0, 2, 5, 0 },
-	// 				{ 0, 0, 0, 0, 0, 0, 0, 7, 4 },
-	// 				{ 0, 0, 5, 2, 0, 6, 3, 0, 0 } };
+///----------------------------------------------
 
-    int grid[9][9];
+void read_grid_from_file(int size, char *ip_file, int grid[36][36]) {
+	FILE *fp;
+	int i, j;
+	fp = fopen(ip_file, "r");
+	for (i=0; i<size; i++) {
+		for (j=0; j<size; j++) {
+			fscanf(fp, "%d", &grid[i][j]);
+		}
+	}
+} 
 
-    for(int i=0;i<9;i++){
-        for(int j=0;j<9;j++){
-            scanf("%d", &grid[i][j]);
-        }
-    }
-
-	if (solveSudoku(grid, 0, 0)==1)
+void solve(int grid[36][36]){
+    if (solveSudoku(grid, 0, 0)==1)
 		print(grid);
 	else
 		printf("No solution exists");
+}
 
-	return 0;
-	// This is code is contributed by Pradeep Mondal P
+int main(int argc, char *argv[]) {
+	int grid[36][36], size, i, j;
+	
+	if (argc != 3) {
+		printf("Usage: ./sudoku.out grid_size inputfile");
+		exit(-1);
+	}
+	
+	size = atoi(argv[1]);
+	read_grid_from_file(size, argv[2], grid);
+	
+	/* Do your thing here */
+
+	solve(grid);
+	
+	/* The segment below prints the grid in a standard format. Do not change */
+	// for (i=0; i<size; i++) {
+	// 	for (j=0; j<size; j++)
+	// 		printf("%d\t", grid[i][j]+100);
+	// 	printf("\n");
+	// }
+	
+	
 }
